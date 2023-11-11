@@ -60,6 +60,7 @@ CREATE TABLE tblHDNhap(
 	dNgayNhap DATE CHECK(dNgayNhap<=GETDATE()) NOT NULL,
 	sMaNCC VARCHAR(10) CONSTRAINT FK_tblNhaCC FOREIGN KEY (sMaNCC) REFERENCES tblNhaCC ON UPDATE CASCADE ON DELETE CASCADE
 	)
+ALTER TABLE tblHDNhap ADD iSoLuong INT NOT NULL CHECK (iSoLuong>0)
 
 -- Tạo bảng chi tiết hoá đơn nhập--
 CREATE TABLE tblCTNhap(
@@ -78,6 +79,7 @@ CREATE TABLE tblHDXuat(
 	sHinhThucTT NVARCHAR(20) NOT NULL CHECK(sHinhThucTT IN(N'Tiền mặt',N'Thẻ ngân hàng')),
 	fTongtien FLOAT CHECK (fTongtien>0)
 	)
+ALTER TABLE tblHDXuat ADD iSoLuong INT NOT NULL CHECK (iSoLuong>0)
 
 --Tạo bảng Bảo hành
 CREATE TABLE tblBaoHanh(
