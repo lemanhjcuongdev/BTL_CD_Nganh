@@ -1,9 +1,10 @@
-﻿-- Tạo database --
-CREATE DATABASE KinhDoanhTBMayTinh 
-on (
-	name='KinhDoanhTBMayTinh',
-	filename='D:\ChuyendeNganh\KinhDoanhTBMayTinh.mdf',
-	size=2MB,
-	maxsize=unlimited,
-	filegrowth=10%
-)
+﻿-- Tạo database
+CREATE DATABASE 
+    KinhDoanhTBMayTinh
+ON (
+    NAME = 'KinhDoanhTBMayTinh',
+    FILENAME = 'D:\ChuyendeNganh\KinhDoanhTBMayTinh.mdf',
+    SIZE = 2MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 10%
+);

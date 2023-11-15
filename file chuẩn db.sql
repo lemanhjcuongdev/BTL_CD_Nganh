@@ -1,124 +1,126 @@
-﻿USE KinhDoanhTBMayTinh
 
--- Create table Phòng ban
-CREATE TABLE tblPhongBan
-(
-    sMaPB VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenPB NVARCHAR(25) NOT NULL
-);
+create database KinhDoanhTBMayTinh
+USE KinhDoanhTBMayTinh
+GO
 
--- Create table Nhân viên
-CREATE TABLE tblNhanVien
-(
-    sMaNV VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenNV NVARCHAR(25) NOT NULL,
-    dNgaySinh DATE NOT NULL,
-    sGioiTinh NVARCHAR(5) CHECK (sGioiTinh IN ('Nam', N'Nữ')) NOT NULL,
-    sDiaChi NVARCHAR(50) NOT NULL,
-    sSDT VARCHAR(10) NOT NULL,
-    fHSL FLOAT CHECK (fHSL >= 2 AND fHSL <= 10) NOT NULL,
-    fLCB FLOAT NOT NULL CHECK (fLCB > 0),
-    dNgayVaoLam DATE NOT NULL,
-    CONSTRAINT [Ngày vào làm đủ 18 tuổi] CHECK (DATEDIFF(DAY, dNgaySinh, dNgayVaoLam) / 365 >= 18),
-    sMaPB VARCHAR(10) CONSTRAINT FK_tblPhongBan FOREIGN KEY (sMaPB) REFERENCES tblPhongBan
-);
+--Tạo bảng Phòng ban
+	CREATE TABLE tblPhongBan (
+		sMaPB VARCHAR(10) PRIMARY KEY ,
+		sTenPB NVARCHAR(25) NOT NULL ,
+	)
+	-- Tạo bảng Nhân viên--
+	CREATE TABLE tblNhanVien (
+		sMaNV VARCHAR(10) PRIMARY KEY ,
+		sTenNV NVARCHAR(25) NOT NULL ,
+		dNgaySinh DATE NOT NULL,
+		sGioiTinh NVARCHAR(5) CHECK ( sGioiTinh IN ('Nam',N'Nữ')) ,
+		sDiaChi NVARCHAR(50) NOT NULL ,
+		sSDT VARCHAR(10) NOT NULL ,
+		fHSL FLOAT CHECK(fHSL>=2 AND fHSL<=10) NOT NULL,
+		fLCB FLOAT NOT NULL CHECK(fLCB>0),
+		dNgayVaoLam DATE NOT NULL ,
+		CONSTRAINT [Ngày vào làm đủ 18 tuổi] CHECK(DATEDIFF(DAY,dNgaySinh,dNgayVaoLam)/365>=18),
+		sMaPB VARCHAR(10) CONSTRAINT FK_tblPhongBan FOREIGN KEY (sMaPB) REFERENCES tblPhongBan
+		)
 
--- Create table Khách hàng
-CREATE TABLE tblKhachHang
-(
-    sMaKH VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenKH NVARCHAR(25) NOT NULL,
-    sSDTKH VARCHAR(10),
-    sEmail VARCHAR(50),
-    sDiaChi NVARCHAR(50)
-);
-
--- Create table Nhà cung cấp
-CREATE TABLE tblNhaCC
-(
-    sMaNCC VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenNCC VARCHAR(MAX) NOT NULL,
-    sDiaChiNCC NVARCHAR(4000) NOT NULL
-);
-
--- Create table Loại sản phẩm
-CREATE TABLE tblLoaiSP
-(
-    sMaLoai VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenLoai NVARCHAR(50) NOT NULL
-);
-
--- Create table Sản phẩm
-CREATE TABLE tblSanPham
-(
-    sMaSP VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaLoai VARCHAR(10) CONSTRAINT FK_tblLoaiSP FOREIGN KEY (sMaLoai) REFERENCES tblLoaiSP,
-    sTenSP NVARCHAR(4000) NOT NULL,
-    sHangSX NVARCHAR(25) NOT NULL,
-    iNamSX INT NOT NULL,
-    fDonGiaNhap FLOAT CHECK (fDonGiaNhap > 0) NOT NULL,
-    fDonGiaXuat FLOAT NOT NULL,
-    CONSTRAINT dongia CHECK (fDonGiaXuat > fDonGiaNhap),
-    iSoLuong INT NOT NULL DEFAULT 0,
-    iHanBH INT CHECK (iHanBH > 0)
-);
-
--- Create table Kho
-CREATE TABLE tblKho
-(
-    sSeri VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaSP VARCHAR(10) REFERENCES tblSanPham (sMaSP) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
--- Create table Hoá đơn nhập
-CREATE TABLE tblHDNhap
-(
-    sMaHDN VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaNV VARCHAR(10) REFERENCES dbo.tblNhanVien(sMaNV) ON UPDATE CASCADE ON DELETE CASCADE,
-    dNgayNhap DATE CHECK (dNgayNhap <= GETDATE()) NOT NULL,
-    sMaNCC VARCHAR(10) CONSTRAINT FK_tblNhaCC FOREIGN KEY (sMaNCC) REFERENCES tblNhaCC ON UPDATE CASCADE ON DELETE CASCADE,
-    iSoLuong INT NOT NULL DEFAULT 0
-);
-
--- Create table Chi tiết hoá đơn nhập
-CREATE TABLE tblCTNhap
-(
-    sMaCTN VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaHDN VARCHAR(10) REFERENCES tblHDNhap(sMaHDN) ON UPDATE CASCADE ON DELETE CASCADE,
-    sMaSP VARCHAR(10) REFERENCES tblSanPham(sMaSP) ON UPDATE CASCADE ON DELETE CASCADE,
-    sSeri VARCHAR(10) REFERENCES tblKho(sSeri)
-);
-
--- Create table Hoá đơn xuất
-CREATE TABLE tblHDXuat
-(
-    sMaHDX VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaNV VARCHAR(10) REFERENCES tblNhanVien(sMaNV) ON UPDATE CASCADE ON DELETE CASCADE,
-    dNgayLap DATE CHECK (dNgayLap <= GETDATE()) NOT NULL,
-    sMaKH VARCHAR(10) REFERENCES tblKhachHang(sMaKH) ON UPDATE CASCADE ON DELETE CASCADE,
-    sHinhThucTT NVARCHAR(20) NOT NULL CHECK (sHinhThucTT IN (N'Tiền mặt', N'Thẻ ngân hàng')),
-    fTongtien FLOAT CHECK (fTongtien > 0),
-    iSoLuong INT NOT NULL DEFAULT 0
-);
+	-- Tạo bảng khách hàng--
+	CREATE TABLE tblKhachHang(
+		sMaKH VARCHAR(10) PRIMARY KEY NOT NULL,
+		sTenKH NVARCHAR(25)  NOT NULL,
+		sSDTKH VARCHAR(10),
+		sEmail VARCHAR(50) ,
+		sDiaChi NVARCHAR(50)
+		)
+		
+	-- Tạo bảng nhà cung cấp--
+	CREATE TABLE tblNhaCC(
+		sMaNCC VARCHAR(10) PRIMARY KEY,
+		sTenNCC VARCHAR(MAX),
+		sDiaChiNCC NVARCHAR(4000),
+	)
 
 
--- Create table Bảo hành
-CREATE TABLE tblBaoHanh
-(
-    sMaBH VARCHAR(10) PRIMARY KEY NOT NULL,
-    sSeri VARCHAR(10) REFERENCES tblKho(sSeri) ON UPDATE CASCADE ON DELETE CASCADE,
-    sMaHDX VARCHAR(10) REFERENCES tblHDXuat(sMaHDX) ON UPDATE CASCADE ON DELETE CASCADE,
-    sMaNV VARCHAR(10) REFERENCES tblNhanVien(sMaNV),
-    sGhichu NVARCHAR(2000)
-);
+	--Tạo bảng loại sản phẩm
+	CREATE TABLE tblLoaiSP(
+		sMaLoai VARCHAR(10) PRIMARY KEY NOT NULL,
+		sTenLoai NVARCHAR(50) NOT NULL
+	)
 
--- Create table Chi tiết xuất
-CREATE TABLE tblCTXuat
-(
-    sMaCTX VARCHAR(10) PRIMARY KEY NOT NULL,
-    sMaHDX VARCHAR(10) REFERENCES tblHDXuat(sMaHDX) ON UPDATE CASCADE ON DELETE CASCADE,
-    sSeri VARCHAR(10) REFERENCES tblKho(sSeri) ON UPDATE CASCADE ON DELETE CASCADE
-);
+	-- Tạo bảng sản phẩm--
+	CREATE TABLE tblSanPham(
+		sMaSP VARCHAR(10) PRIMARY KEY NOT NULL,
+		sMaLoai VARCHAR(10) CONSTRAINT FK_tblLoaiSP FOREIGN KEY (sMaLoai) REFERENCES tblLoaiSP,
+		sTenSP NVARCHAR(4000) NOT NULL,
+		sHangSX NVARCHAR(25) NOT NULL,
+		iNamSX INT NOT NULL,
+		fDonGiaNhap FLOAT CHECK(fDonGiaNhap>0) NOT NULL,
+		fDonGiaXuat FLOAT NOT NULL,
+		CONSTRAINT dongia CHECK(fDonGiaXuat>fDonGiaNhap),
+		iSoLuong INT NOT NULL DEFAULT 0,
+		iHanBH INT CHECK (iHanBH >0)
+		);
+
+	-- Tạo bảng Kho 
+	CREATE TABLE tblKho
+	(
+		sSeri VARCHAR(10) PRIMARY KEY NOT NULL,
+		sMaSP VARCHAR(10) REFERENCES tblSanPham (sMaSP) ON UPDATE CASCADE ON DELETE CASCADE
+	)
+
+
+	-- Tạo bảng hoá đơn nhập --
+	CREATE TABLE tblHDNhap(
+	sMaHDN VARCHAR(10) PRIMARY KEY,
+	sMaNV VARCHAR(10) REFERENCES dbo.tblNhanVien(sMaNV) ON UPDATE CASCADE ON DELETE CASCADE ,
+	dNgayNhap DATE CHECK(dNgayNhap<=GETDATE()) NOT NULL,
+	sMaNCC VARCHAR(10) CONSTRAINT FK_tblNhaCC FOREIGN KEY (sMaNCC) REFERENCES tblNhaCC ON UPDATE CASCADE ON DELETE CASCADE,
+	iSoLuong INT NOT NULL DEFAULT 0
+	)
+
+
+	-- Tạo bảng chi tiết hoá đơn nhập--
+	CREATE TABLE tblCTNhap(
+	sMaCTN VARCHAR(10) PRIMARY KEY NOT NULL,
+	sMaHDN VARCHAR(10) REFERENCES tblHDNhap(sMaHDN) ON UPDATE CASCADE ON DELETE CASCADE  ,
+	sMaSP VARCHAR(10)  REFERENCES tblSanPham(sMaSP) ON UPDATE CASCADE ON DELETE CASCADE,
+	sSeri VARCHAR(10) REFERENCES tblKho(sSeri) 
+	)
+
+	-- Tạo bảng Hoá đơn xuất--
+	CREATE TABLE tblHDXuat(
+	sMaHDX VARCHAR(10) PRIMARY KEY,
+	sMaNV VARCHAR(10) REFERENCES tblNhanVien(sMaNV) ON UPDATE CASCADE ON DELETE CASCADE,
+	dNgayLap DATE CHECK(dNgayLap<=GETDATE()) NOT NULL ,
+	sMaKH VARCHAR(10) REFERENCES tblKhachHang(sMaKH) ON UPDATE CASCADE ON DELETE CASCADE ,
+	sHinhThucTT NVARCHAR(20) NOT NULL CHECK(sHinhThucTT IN(N'Tiền mặt',N'Thẻ ngân hàng')),
+	fTongtien FLOAT CHECK (fTongtien>0),
+	iSoLuong INT NOT NULL DEFAULT 0
+	)
+
+
+
+	--DELETE FROM tblHDXuat;
+	--DBCC CHECKIDENT ('[tblHDXuat]', RESEED, 0);
+
+	--Tạo bảng Bảo hành
+	CREATE TABLE tblBaoHanh(
+		sMaBH VARCHAR(10) PRIMARY KEY NOT NULL,
+		sMaSP VARCHAR(10) REFERENCES tblSanPham(sMaSP) ON UPDATE CASCADE ON DELETE CASCADE,
+		sMaHDX VARCHAR(10) REFERENCES tblHDXuat(sMaHDX) ON UPDATE CASCADE ON DELETE CASCADE,
+		sMaNV VARCHAR(10) REFERENCES tblNhanVien(sMaNV),
+		sGhichu NVARCHAR(2000)
+	)
+
+-- Tạo bảng Chi tiết xuất--
+CREATE TABLE tblCTXuat(
+	sMaCTX VARCHAR(10) PRIMARY KEY NOT NULL,
+	sMaHDX VARCHAR(10) REFERENCES tblHDXuat(sMaHDX) ON UPDATE CASCADE ON DELETE CASCADE ,
+	sSeri VARCHAR(10) REFERENCES tblKho(sSeri) ON UPDATE CASCADE ON DELETE CASCADE ,
+	)
+
+
+
+
 
 --Thêm dữ liệu bảng phòng ban 
 INSERT INTO tblPhongBan (sMaPB, sTenPB) VALUES ('PB01', N'Phòng ban IT');
@@ -180,15 +182,18 @@ INSERT INTO tblCTNhap (sMaCTN, sMaHDN, sMaSP,sSeri) VALUES ('CTN03', 'HDN02', 'S
 INSERT INTO tblCTNhap (sMaCTN, sMaHDN, sMaSP,sSeri) VALUES ('CTN04', 'HDN02', 'SP03','SR04');
 INSERT INTO tblCTNhap (sMaCTN, sMaHDN, sMaSP,sSeri) VALUES ('CTN05', 'HDN03', 'SP02','SR05');
 	
+
 --Thêm dữ liệu bảng hóa đơn xuất 
 INSERT INTO tblHDXuat (sMaHDX, sMaNV, dNgayLap, sMaKH, sHinhThucTT, fTongtien) VALUES ('HDX01', 'NV01', '2023-11-10', 'KH01', N'Tiền mặt', 100000000);
 INSERT INTO tblHDXuat (sMaHDX, sMaNV, dNgayLap, sMaKH, sHinhThucTT, fTongtien) VALUES ('HDX02', 'NV02', '2023-11-9', 'KH02', N'Thẻ ngân hàng', 120000000);
 INSERT INTO tblHDXuat (sMaHDX, sMaNV, dNgayLap, sMaKH, sHinhThucTT, fTongtien) VALUES ('HDX03', 'NV03', '2023-11-9', 'KH03', N'Tiền mặt', 150000000);
 
+
+
 --Thêm dữ liệu bảng bảo hành
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH01', 'SR01', 'HDX01', 'NV01', 'Lỗi hở sáng màn');
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH03', 'SR05', 'HDX03', 'NV03', 'Lỗi không sạc được');
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH02', 'SR03', 'HDX02', 'NV02', 'Lỗi không mở nguồn được')
+INSERT INTO tblBaoHanh (sMaBH, sMaSP, sMaHDX, sMaNV, sGhichu) VALUES ('BH01', 'SP01', 'HDX01', 'NV01', 'Lỗi hở sáng màn');
+INSERT INTO tblBaoHanh (sMaBH, sMaSP, sMaHDX, sMaNV, sGhichu) VALUES ('BH03', 'SP03', 'HDX03', 'NV03', 'Lỗi không sạc được');
+INSERT INTO tblBaoHanh (sMaBH, sMaSP, sMaHDX, sMaNV, sGhichu) VALUES ('BH02', 'SP02', 'HDX02', 'NV02', 'Lỗi không mở nguồn được')
 
 --Thêm dữ liệu bảng chi tiết hóa đơn xuất 
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX01', 'HDX01', 'SR01');
@@ -196,11 +201,9 @@ INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX02', 'HDX01', 'SR02')
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX03', 'HDX02', 'SR03');
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX04', 'HDX02', 'SR04');
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX05', 'HDX03', 'SR05');
+	
 
---SELECT
+	
+	
 
---VIEW
-
---PROCEDURE
-
---TRIGGER
+	
