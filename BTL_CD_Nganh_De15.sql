@@ -1,4 +1,17 @@
-﻿USE KinhDoanhTBMayTinh
+﻿-- Tạo database
+CREATE DATABASE 
+    KinhDoanhTBMayTinh
+ON (
+    NAME = 'KinhDoanhTBMayTinh',
+    FILENAME = 'D:\ChuyendeNganh\KinhDoanhTBMayTinh.mdf',
+    SIZE = 2MB,
+    MAXSIZE = UNLIMITED,
+    FILEGROWTH = 10%
+);
+
+GO
+
+USE KinhDoanhTBMayTinh
 
 -- Create table Phòng ban
 CREATE TABLE tblPhongBan
@@ -37,7 +50,7 @@ CREATE TABLE tblKhachHang
 CREATE TABLE tblNhaCC
 (
     sMaNCC VARCHAR(10) PRIMARY KEY NOT NULL,
-    sTenNCC VARCHAR(MAX) NOT NULL,
+    sTenNCC NVARCHAR(MAX) NOT NULL,
     sDiaChiNCC NVARCHAR(4000) NOT NULL
 );
 
@@ -66,9 +79,11 @@ CREATE TABLE tblSanPham
 -- Create table Kho
 CREATE TABLE tblKho
 (
-    sSeri VARCHAR(10) PRIMARY KEY NOT NULL,
+    sSeri VARCHAR(10) PRIMARY KEY NOT NULL REFERENCES tblCTNhap(sSeri),
     sMaSP VARCHAR(10) REFERENCES tblSanPham (sMaSP) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+
 
 -- Create table Hoá đơn nhập
 CREATE TABLE tblHDNhap
@@ -86,7 +101,7 @@ CREATE TABLE tblCTNhap
     sMaCTN VARCHAR(10) PRIMARY KEY NOT NULL,
     sMaHDN VARCHAR(10) REFERENCES tblHDNhap(sMaHDN) ON UPDATE CASCADE ON DELETE CASCADE,
     sMaSP VARCHAR(10) REFERENCES tblSanPham(sMaSP) ON UPDATE CASCADE ON DELETE CASCADE,
-    sSeri VARCHAR(10) REFERENCES tblKho(sSeri)
+    sSeri VARCHAR(10) UNIQUE
 );
 
 -- Create table Hoá đơn xuất
@@ -159,14 +174,14 @@ INSERT INTO tblSanPham VALUES ('SP03', 'LSP03', N'Tai nghe Bluetooth Airpod Gen 
 INSERT INTO tblSanPham VALUES ('SP04', 'LSP01', N'Laptop Dell Vostro 3510', N'Dell', 2023, 10000000, 11000000,3,12);
 
 --Thêm dữ liệu bảng kho
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR01','SP01');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR02','SP01');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR03','SP02');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR04','SP03');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR05','SP03');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR06','SP04');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR07','SP04');
-INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR08','SP04');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR01','SP01');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR02','SP01');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR03','SP02');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR04','SP03');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR05','SP03');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR06','SP04');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR07','SP04');
+--INSERT INTO tblKho(sSeri, sMaSP) VALUES ('SR08','SP04');
 
 --Thêm dữ liệu bảng hóa đơn nhập
 INSERT INTO tblHDNhap (sMaHDN, sMaNV, dNgayNhap, sMaNCC)  VALUES   ('HDN01', 'NV01', '2023-11-9', 'NCC03');
@@ -186,9 +201,9 @@ INSERT INTO tblHDXuat (sMaHDX, sMaNV, dNgayLap, sMaKH, sHinhThucTT, fTongtien) V
 INSERT INTO tblHDXuat (sMaHDX, sMaNV, dNgayLap, sMaKH, sHinhThucTT, fTongtien) VALUES ('HDX03', 'NV03', '2023-11-9', 'KH03', N'Tiền mặt', 150000000);
 
 --Thêm dữ liệu bảng bảo hành
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH01', 'SR01', 'HDX01', 'NV01', 'Lỗi hở sáng màn');
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH03', 'SR05', 'HDX03', 'NV03', 'Lỗi không sạc được');
-INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH02', 'SR03', 'HDX02', 'NV02', 'Lỗi không mở nguồn được')
+INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH01', 'SR01', 'HDX01', 'NV01', N'Lỗi hở sáng màn');
+INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH03', 'SR05', 'HDX03', 'NV03', N'Lỗi không sạc được');
+INSERT INTO tblBaoHanh (sMaBH, sSeri, sMaHDX, sMaNV, sGhichu) VALUES ('BH02', 'SR03', 'HDX02', 'NV02', N'Lỗi không mở nguồn được')
 
 --Thêm dữ liệu bảng chi tiết hóa đơn xuất 
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX01', 'HDX01', 'SR01');
@@ -202,5 +217,105 @@ INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX05', 'HDX03', 'SR05')
 --VIEW
 
 --PROCEDURE
+-- Tạo store procedure để lấy thông tin nhân viên
+GO
+CREATE PROCEDURE sp_Thongtinnhanvien
+@MaNV VARCHAR(10)
+AS
+BEGIN
+	SELECT
+		NV.sMaNV,
+		NV.sTenNV,
+		NV.dNgaySinh,
+		NV.sGioiTinh,
+		NV.sDiaChi,
+		NV.sSDT,
+		NV.fHSL,
+		NV.fLCB,
+		NV.dNgayVaoLam,
+		PB.sTenPB AS TenPhongBan
+	FROM
+		tblNhanVien NV
+	INNER JOIN
+		tblPhongBan PB ON NV.sMaPB = PB.sMaPB
+	WHERE
+		NV.sMaNV = @MaNV;
+END;
 
+EXEC sp_Thongtinnhanvien 'NV01'
+
+GO
+-- Tạo thủ tục tìm danh sách sản phẩm có bảo hành từ một hóa đơn xuất
+CREATE PROC spDanhSachSanPhamBaoHanh
+	@MaHoaDonXuat NVARCHAR(50)
+AS
+BEGIN
+	SELECT
+		sp.sMaSP as MaSanPham,
+		sp.sTenSP as TenSanPham,
+		sp.iHanBH as HanBaoHanh,
+		bh.sSeri AS MaSanPham,
+		bh.sGhichu AS GhiChuBaoHanh
+	FROM
+		tblBaoHanh bh inner join tblKho k on bh.sSeri = k.sSeri
+		inner join tblSanPham sp on k.sMaSP = sp.sMaSP
+	WHERE
+		BH.sMaHDX = @MaHoaDonXuat;
+END;
+
+EXEC spDanhSachSanPhamBaoHanh 'HDX02'
+
+GO
+--Tạo thủ tục tra soát nguồn gốc xuất xứ của sản phẩm 
+CREATE PROC prHD_Tongtien_Max
+	@sMaSP VARCHAR(10)
+AS
+BEGIN
+	SELECT ctn.sMaCTN, ctn.sMaHDN, ctn.sMaSP, sp.sTenSP, sp.sHangSX, sp.iNamSX, ncc.sMaNCC, ncc.sTenNCC, ncc.sDiaChiNCC, hdn.dNgayNhap
+	FROM 
+		tblCTNhap ctn INNER JOIN tblHDNhap hdn ON ctn.sMaHDN = hdn.sMaHDN
+		INNER JOIN tblNhaCC ncc ON hdn.sMaNCC = ncc.sMaNCC
+		INNER JOIN tblSanPham sp ON ctn.sMaSP = sp.sMaSP
+	WHERE ctn.sMaSP = @sMaSP
+END
+
+EXEC prHD_Tongtien_Max 'SP03'
 --TRIGGER
+GO
+--Tạo trigger tự động tăng số lượng sản phẩm khi thêm mới hoá đơn nhập và tự động thêm từng sản phẩm vào kho
+CREATE TRIGGER trTangSoLuongVaThemVaoKho
+ON tblCTNhap
+FOR INSERT
+AS
+BEGIN
+	DECLARE @sMaSP VARCHAR(10), @iSoLuong INT, @sSeri VARCHAR(10)
+
+	SELECT @sMaSP = inserted.sMaSP , @iSoLuong = COUNT(inserted.sSeri)
+	FROM inserted
+	GROUP BY sMaSP
+
+	SELECT @sSeri = inserted.sSeri
+	FROM inserted
+
+	UPDATE tblSanPham
+	SET iSoLuong = iSoLuong + @iSoLuong
+	WHERE sMaSP = @sMaSP
+
+	INSERT INTO tblKho (sMaSP,sSeri) VALUES ( @sMaSP, @sSeri )
+END
+
+--Tạo trigger tự động giảm số lượng sản phẩm khi xuất hoá đơn xuất
+CREATE TRIGGER trGiamSoLuong
+ON tblCTXuat
+FOR INSERT
+AS
+BEGIN
+	DECLARE @sSeri VARCHAR(10), @sMaSP VARCHAR(10)
+
+	SELECT @sSeri = inserted.sSeri, @sMaSP = kho.sMaSP
+	FROM inserted INNER JOIN tblKho kho ON inserted.sSeri = kho.sSeri
+
+	UPDATE tblSanPham
+	SET iSoLuong = iSoLuong - 1
+	WHERE sMaSP = @sMaSP
+END
