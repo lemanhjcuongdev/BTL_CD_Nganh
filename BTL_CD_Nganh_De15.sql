@@ -3,7 +3,7 @@ CREATE DATABASE
     KinhDoanhTBMayTinh
 ON (
     NAME = 'KinhDoanhTBMayTinh',
-    FILENAME = 'D:\ChuyendeNganh\KinhDoanhTBMayTinh.mdf',
+    FILENAME = 'D:\ChuyendeNganh\KinhDoanhTBMayTinh.mdf', --CHANGE YOUR DATABASE PATH
     SIZE = 2MB,
     MAXSIZE = UNLIMITED,
     FILEGROWTH = 10%
@@ -76,15 +76,6 @@ CREATE TABLE tblSanPham
     iHanBH INT CHECK (iHanBH > 0)
 );
 
--- Create table Kho
-CREATE TABLE tblKho
-(
-    sSeri VARCHAR(10) PRIMARY KEY NOT NULL REFERENCES tblCTNhap(sSeri),
-    sMaSP VARCHAR(10) REFERENCES tblSanPham (sMaSP) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-
-
 -- Create table Hoá đơn nhập
 CREATE TABLE tblHDNhap
 (
@@ -102,6 +93,13 @@ CREATE TABLE tblCTNhap
     sMaHDN VARCHAR(10) REFERENCES tblHDNhap(sMaHDN) ON UPDATE CASCADE ON DELETE CASCADE,
     sMaSP VARCHAR(10) REFERENCES tblSanPham(sMaSP) ON UPDATE CASCADE ON DELETE CASCADE,
     sSeri VARCHAR(10) UNIQUE
+);
+
+-- Create table Kho
+CREATE TABLE tblKho
+(
+    sSeri VARCHAR(10) PRIMARY KEY NOT NULL REFERENCES tblCTNhap(sSeri),
+    sMaSP VARCHAR(10) REFERENCES tblSanPham (sMaSP) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Create table Hoá đơn xuất
@@ -212,39 +210,186 @@ INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX03', 'HDX02', 'SR03')
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX04', 'HDX02', 'SR04');
 INSERT INTO tblCTXuat (sMaCTX, sMaHDX, sSeri ) VALUES ('CTX05', 'HDX03', 'SR05');
 
---SELECT
-
 --VIEW
+-- Tạo view tổng tiền của từng sản phẩm đã nhập hàng 
+CREATE VIEW vw_Tongtienspdanhap
+AS
+SELECT
+    hdn.sMaHDN,
+    hdn.dNgayNhap,
+    hdn.sMaNCC,
+	sp.sTenSP,
+    SUM(sp.iSoLuong * sp.fDonGiaNhap) AS TongTienNhap
+FROM tblHDNhap hdn
+JOIN tblCTNhap ctn ON hdn.sMaHDN = ctn.sMaHDN
+join tblSanPham sp on ctn.sMaSP = sp.sMaSP
+GROUP BY hdn.sMaHDN, hdn.dNgayNhap, hdn.sMaNCC, sTenSP;
+
+--Tạo view lấy ra chi tiết đơn nhập hàng
+create view vw_Chitietdonnhap
+as
+select
+ctn.sMaCTN,
+ctn.sMaHDN,
+ctn.sMaSP,
+ctn.sSeri
+from tblCTNhap ctn
+inner join tblHDNhap hdn on ctn.sMaHDN = hdn.sMaHDN
+
+--Tạo view lấy ra chi tiết đơn bán hàng
+Create view vw_Chitietxuathang
+as
+select
+ctx.sMaCTX,
+ctx.sMaHDX,
+ctx.sSeri,
+sp.sMaSP,
+sp.sTenSP
+from tblCTXuat ctx inner join tblHDXuat hdx on ctx.sMaHDX = hdx. sMaHDX inner join tblkho k on k.sSeri = ctx.sSeri
+inner join tblSanPham sp
+on k.sMaSP = sp.sMaSP
+select * from vw_Chitietxuathang
+
+--Tạo view tìm sản phẩm bán chạy nhất
+CREATE VIEW VW_Sanphambanchay
+AS
+SELECT TOP 100
+	sp.sMaSP AS MaSanPham,
+	COUNT (CTX.sSeri) AS SoLuongBan,
+	MAX(hdx.fTongtien) AS DoanhThuTong
+
+FROM
+	tblCTXuat ctx
+	JOIN tblHDXuat hdx ON ctx.sMaHDX = hdx.sMaHDX
+	JOIN tblKho k ON k.sSeri = ctx.sSeri
+	JOIN tblSanPham sp ON sp.sMaSP = k.sMaSP
+GROUP BY sp.sMaSP
+ORDER BY COUNT(CTX.sSeri) DESC
+	
+select * from vw_Sanphambanchay
+
+--Tạo view hiển thị tất cả bảo hành, cùng với sản phẩm mà chúng được bảo hành----
+
+CREATE VIEW View_BaoHanh_SanPham 
+AS
+SELECT 
+	tblBaoHanh.sMaBH, 
+	tblKho.sMaSP AS 'MaSanPhamBH', 
+	tblSanPham.sTenSP AS 'TenSanPham', 
+	tblSanPham.sHangSX AS 'HangSanXuat', 
+	tblSanPham.iNamSX AS 'NamSanXuat', 
+	tblBaoHanh.sMaNV, tblBaoHanh.sMaHDX, 
+	tblBaoHanh.sGhichu
+FROM tblBaoHanh
+	INNER JOIN tblKho ON tblBaoHanh.sSeri = tblKho.sSeri
+	INNER JOIN tblSanPham ON tblKho.sMaSP = tblSanPham.sMaSP
+
+--Tạo view hiển thị danh sách nhân viên và mã bảo hành mà người đó đảm nhận
+
+CREATE VIEW View_NhanVien_BaoHanh AS
+SELECT tblNhanVien.sMaNV, tblNhanVien.sTenNV AS 'TenNhanVien', tblBaoHanh.sMaBH
+FROM tblNhanVien
+LEFT JOIN tblBaoHanh ON tblNhanVien.sMaNV = tblBaoHanh.sMaNV;
 
 --PROCEDURE
+
 -- Tạo store procedure để lấy thông tin nhân viên
-GO
-CREATE PROCEDURE sp_Thongtinnhanvien
-@MaNV VARCHAR(10)
+
+--CREATE PROCEDURE sp_Thongtinnhanvien
+--@MaNV VARCHAR(10)
+--AS
+--BEGIN
+--	SELECT
+--		NV.sMaNV,
+--		NV.sTenNV,
+--		NV.dNgaySinh,
+--		NV.sGioiTinh,
+--		NV.sDiaChi,
+--		NV.sSDT,
+--		NV.fHSL,
+--		NV.fLCB,
+--		NV.dNgayVaoLam,
+--		PB.sTenPB AS TenPhongBan
+--	FROM
+--		tblNhanVien NV
+--	INNER JOIN
+--		tblPhongBan PB ON NV.sMaPB = PB.sMaPB
+--	WHERE
+--		NV.sMaNV = @MaNV;
+--END;
+
+--EXEC sp_Thongtinnhanvien 'NV01'
+
+--Tạo  thủ tục lấy ra sản phẩm đã được nhập hàng theo mã hóa đơn nhập
+CREATE PROCEDURE spGetProductsByHDNhap
+    @MaHDN VARCHAR(10)
+AS
+BEGIN
+    SELECT
+        SP.sMaSP,
+        SP.sTenSP,
+        SP.sHangSX,
+        SP.iNamSX,
+        CT.sSeri
+    FROM
+        tblCTNhap CT
+    JOIN tblSanPham SP ON CT.sMaSP = SP.sMaSP
+    WHERE
+        CT.sMaHDN = @MaHDN;
+END;
+
+EXEC spGetProductsByHDNhap  @MaHDN = 'HDN01'
+
+--Tạo thủ tục tìm kiếm sản phẩm đã nhập hàng
+CREATE PROCEDURE sp_TimKiemSanPhamNhapHang
+	@TuKhoa NVARCHAR(50)
 AS
 BEGIN
 	SELECT
-		NV.sMaNV,
-		NV.sTenNV,
-		NV.dNgaySinh,
-		NV.sGioiTinh,
-		NV.sDiaChi,
-		NV.sSDT,
-		NV.fHSL,
-		NV.fLCB,
-		NV.dNgayVaoLam,
-		PB.sTenPB AS TenPhongBan
+		CTN.sMaHDN,
+		SP.sMaSP,
+		SP.sTenSP,
+		SP.iSoLuong
 	FROM
-		tblNhanVien NV
-	INNER JOIN
-		tblPhongBan PB ON NV.sMaPB = PB.sMaPB
+		tblCTNhap ctn
+		JOIN
+		tblSanPham sp ON ctn.sMaSP = sp.sMaSP
 	WHERE
-		NV.sMaNV = @MaNV;
+		CTN.sMaHDN LIKE '%' + @TuKhoa + '%' OR
+		SP.sTenSP LIKE '%' + @TuKhoa + '%';
 END;
+EXEC sp_TimKiemSanPhamNhapHang @TuKhoa='Laptop'
 
-EXEC sp_Thongtinnhanvien 'NV01'
+--Tạo thủ tục tra soát nguồn gốc xuất xứ của sản phẩm 
+CREATE PROC prHD_Tongtien_Max
+	@sMaSP VARCHAR(10)
+AS
+BEGIN
+	SELECT ctn.sMaCTN, ctn.sMaHDN, ctn.sMaSP, sp.sTenSP, sp.sHangSX, sp.iNamSX, ncc.sMaNCC, ncc.sTenNCC, ncc.sDiaChiNCC, hdn.dNgayNhap
+	FROM 
+		tblCTNhap ctn INNER JOIN tblHDNhap hdn ON ctn.sMaHDN = hdn.sMaHDN
+		INNER JOIN tblNhaCC ncc ON hdn.sMaNCC = ncc.sMaNCC
+		INNER JOIN tblSanPham sp ON ctn.sMaSP = sp.sMaSP
+	WHERE ctn.sMaSP = @sMaSP
+END
 
-GO
+EXEC prHD_Tongtien_Max 'SP03'
+
+--Tạo thủ tục lấy ra các sản phẩm mà khách hàng mua theo mã hóa đơn nhập từ bàn phím
+CREATE PROC prLaySPTheoHDX
+@sMaHDX VARCHAR(10)
+AS
+BEGIN
+	SELECT k.sSeri, sp.sMaSP, sp.sTenSP
+	FROM 
+		tblCTXuat ctx INNER JOIN tblHDXuat hdx ON ctx.sMaHDX = hdx.sMaHDX
+		INNER JOIN tblKho k ON K.sSeri = CTX.sSeri
+		INNER JOIN tblSanPham sp ON SP.sMaSP = K.sMaSP
+		WHERE hdx.sMaHDX = @sMaHDX
+END
+
+EXEC prLaySPTheoHDX 'HDX02'
+
 -- Tạo thủ tục tìm danh sách sản phẩm có bảo hành từ một hóa đơn xuất
 CREATE PROC spDanhSachSanPhamBaoHanh
 	@MaHoaDonXuat NVARCHAR(50)
@@ -265,23 +410,44 @@ END;
 
 EXEC spDanhSachSanPhamBaoHanh 'HDX02'
 
-GO
---Tạo thủ tục tra soát nguồn gốc xuất xứ của sản phẩm 
-CREATE PROC prHD_Tongtien_Max
-	@sMaSP VARCHAR(10)
+--Lấy thông tin bảo hành của một sản phẩm dựa trên mã số seri cụ thể
+CREATE PROCEDURE GetThongTinBaoHanh 
+    @soSeri VARCHAR(10)
 AS
 BEGIN
-	SELECT ctn.sMaCTN, ctn.sMaHDN, ctn.sMaSP, sp.sTenSP, sp.sHangSX, sp.iNamSX, ncc.sMaNCC, ncc.sTenNCC, ncc.sDiaChiNCC, hdn.dNgayNhap
-	FROM 
-		tblCTNhap ctn INNER JOIN tblHDNhap hdn ON ctn.sMaHDN = hdn.sMaHDN
-		INNER JOIN tblNhaCC ncc ON hdn.sMaNCC = ncc.sMaNCC
-		INNER JOIN tblSanPham sp ON ctn.sMaSP = sp.sMaSP
-	WHERE ctn.sMaSP = @sMaSP
+    SELECT	tblBaoHanh.sMaBH, 
+			tblBaoHanh.sSeri AS 'SeriSanPhamBH',
+			tblSanPham.sTenSP AS 'TenSanPham', 
+			tblSanPham.sHangSX AS 'HangSanXuat', 
+			tblSanPham.iNamSX AS 'NamSanXuat', 
+			tblBaoHanh.sMaNV,
+			tblNhanVien.sTenNV AS 'NhanVienPhuTrach', 
+			tblBaoHanh.sGhichu
+    FROM tblBaoHanh
+		INNER JOIN tblKho ON tblBaoHanh.sSeri = tblKho.sSeri
+		INNER JOIN tblSanPham ON tblKho.sMaSP = tblSanPham.sMaSP
+		LEFT JOIN tblNhanVien ON tblBaoHanh.sMaNV = tblNhanVien.sMaNV
+    WHERE tblBaoHanh.sSeri = @soSeri;
+END;
+
+--TRIGGER
+
+-- Tạo trigger tự động tăng số lượng sản phẩm trong bảng hóa đơn nhập khi nhập hàng 
+CREATE TRIGGER trTangSLHDN
+ON tblCTNhap
+FOR INSERT
+AS
+BEGIN
+	DECLARE @sMaHDN VARCHAR(10)
+
+	SELECT @sMaHDN = inserted.sMaHDN
+	FROM inserted
+
+	UPDATE tblHDNhap
+	SET iSoLuong = iSoLuong + 1
+	WHERE sMaHDN = @sMaHDN
 END
 
-EXEC prHD_Tongtien_Max 'SP03'
---TRIGGER
-GO
 --Tạo trigger tự động tăng số lượng sản phẩm khi thêm mới hoá đơn nhập và tự động thêm từng sản phẩm vào kho
 CREATE TRIGGER trTangSoLuongVaThemVaoKho
 ON tblCTNhap
@@ -319,3 +485,57 @@ BEGIN
 	SET iSoLuong = iSoLuong - 1
 	WHERE sMaSP = @sMaSP
 END
+
+--Khi thêm mới chi tiết xuất, tự động tăng số lượng sản phẩm trong hóa đơn xuất theo mã hóa đơn xuất tương ứng
+CREATE TRIGGER trTangSLHDX
+ON tblCTXuat
+FOR INSERT
+AS
+BEGIN
+	DECLARE @sMaHDX VARCHAR(10)
+	
+	SELECT @sMaHDX = inserted.sMaHDX
+	FROM inserted
+	
+	UPDATE tblHDXuat
+	SET iSoLuong = iSoLuong + 1
+	WHERE sMaHDX = @sMaHDX
+END
+
+--Trigger kiểm tra điều kiện trước khi chèn (INSERT) hoặc cập nhật (UPDATE) dữ liệu trong bảng tblBaoHanh
+CREATE TRIGGER trg_InsertUpdate_BaoHanh
+ON tblBaoHanh
+FOR INSERT, UPDATE
+AS
+BEGIN
+    -- Kiểm tra điều kiện trước khi thêm hoặc cập nhật dữ liệu
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        INNER JOIN tblKho ON i.sSeri = tblKho.sSeri
+        INNER JOIN tblSanPham ON tblKho.sMaSP = tblSanPham.sMaSP
+        WHERE tblSanPham.iHanBH <= 0
+    )
+    BEGIN
+        RAISERROR ('Thời gian bảo hành phải lớn hơn 0!', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+END;
+
+--Trigger ngăn chặn việc xóa thông tin bảo hành của sản phẩm nếu có hoá đơn xuất liên quan đến thông tin bảo hành đó
+CREATE TRIGGER trg_Delete_BaoHanh
+ON tblBaoHanh
+FOR DELETE
+AS
+BEGIN
+    -- Kiểm tra xem thông tin bảo hành được xóa có liên quan đến hoá đơn xuất hay không
+    IF EXISTS (
+        SELECT 1
+        FROM deleted d
+        INNER JOIN tblHDXuat ON d.sMaBH = tblHDXuat.sMaHDX
+    )
+    BEGIN
+        RAISERROR ('Không thể xóa thông tin bảo hành có liên kết với hoá đơn xuất!', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+END;
